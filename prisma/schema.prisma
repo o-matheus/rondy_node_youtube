@@ -1,0 +1,23 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Criando tabela
+model User {
+  // Criando um identificador de uso único que por padrão ele seja incrementado (uuid())
+  id        String   @id @unique @default(uuid())
+  name      String
+  email     String
+  password  String
+  // Acomapnahando a hora que o registro foi criado e definindo que o valor padrão seja o tempo da ação.
+  createdAt DateTime @default(now())
+}
