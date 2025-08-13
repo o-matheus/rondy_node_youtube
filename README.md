@@ -9,12 +9,12 @@
 Primeiro passo fazer a instalação do nodeJS pelo site: https://nodejs.org/pt/download
 Fazer o download da versão LTS é melhor porque garante um suporte de mais longo prazo. 
 
-No terminal digite:
-`node -v` -> Ver versão do node
-`npm -v` -> Ver versão do gerenciador de pacotes
-`mkdir nome` -> Fazer nova pasta
-`cd destino` -> Pasta que quer chegar
-`cd ..` -> voltar para pasta anterior
+No terminal digite:  
+`node -v` -> Ver versão do node  
+`npm -v` -> Ver versão do gerenciador de pacotes  
+`mkdir nome` -> Fazer nova pasta  
+`cd destino` -> Pasta que quer chegar  
+`cd ..` -> voltar para pasta anterior  
 `code .` -> Abrir pasta no VScode
 
 Para o projeto vamos criar uma pasta `aula` e dentro dessa pasta aula uma pasta `api`.
@@ -23,7 +23,7 @@ Depois de abrir a pasta dentro do Vscode vamos começar a fazer a estrutura do n
 Criação da pasta `src` para ficar armazenado os arquivos fonte do projeto.
 Nela criamos um arquivo `server.js` para ver se o node está funcionando corretamente.
 
-`node src/server.js` -> Para executar o arquivo no terminal.
+`node src/server.js` -> Para executar o arquivo no terminal.  
 `npm i typescript tsc tsx -D` -> Instalando `tsc` o compilador que vai transformar arquivos `ts` e `tsx` em arquivos JavaScript. `tsx` Faz com que seja possível colocar o `JSX` dentro do TypeScript sem que de um erro e o `jsx` é como se fosse um HTML mais ou menos. 
 
 Para criar uma api rest é necessário ter um servidor web para processar as requisições `express` e `fastify` são as duas principais soluções.
@@ -33,15 +33,13 @@ Para fazer a leitura correta do arquivo typescript um script no package.json cha
 ## Aula 2 - Persistência de dados
 Armazenamento dos dados de forma estática para eles não se perderem. 
 Vamos começar a trabalhar com banco de dados. 
-Baixar a extensão prisma para ficar mais fácil trabalhar com ele no VsCode.
+Baixar a extensão prisma para ficar mais fácil trabalhar com ele no VsCode.  
 `Prisma` -> ORM - Object relational map -> Mapeamento do objeto com o banco de dados relacional
-Temos que baixar o prisma, depois o client
-`npm i prisma -D` -> Baixar o prisma
-`npm i @prisma/client` -> Baixando o client
-
-`npx prisma init --datasource-provider sqlite` -> Iniciar o prisma com sqLite.
+Temos que baixar o prisma, depois o client  
+`npm i prisma -D` -> Baixar o prisma  
+`npm i @prisma/client` -> Baixando o client  
+`npx prisma init --datasource-provider sqlite` -> Iniciar o prisma com sqLite.  
 `npx prisma migrate dev` -> Criando banco de dados com o prisma.
-
 `npx prisma studio` -> Ver o banco de dados na versão web.
 
 ```ts
@@ -52,10 +50,10 @@ app.listen({
     console.log('Server is running http://localhost:3333')
 }) 
 ```
-Dessa forma que escrevemos temos que atualizar de forma manual os valores para adequar ao nosso ambiente de desenvolvimento.
+Dessa forma que escrevemos temos que atualizar de forma manual os valores para adequar ao nosso ambiente de desenvolvimento.  
 Vamos baixar o `dotenv` - `npm i dotenv` -> Para pegar essas variáveis globais que nosso computador possui e já sincronizar com nosso código.
 
-Na hora de pegar essas variáveis globais do sistema tinha dado um erro porque o TypeScript não pega por padrão algumas coisas do nodeJS.
+Na hora de pegar essas variáveis globais do sistema tinha dado um erro porque o TypeScript não pega por padrão algumas coisas do nodeJS.  
 `npm i -D @types/node` -> Usei esse comando para resolver o problema.
 
 Temos que criar na raiz do projeto o arquivo `.env`pra trabalhar com essas variáveis globais aparentemente. 
@@ -96,3 +94,37 @@ Para tirar essa estruturação de forma estática no código, escrevemos esse mo
 Então temos que preparar essas estrutura de uma forma que peguemos essas informações do front end e a utilizemos para adicionar as infos do usuário.
 
 ## Aula 3 - Organizando as outras rotas.
+Nessa aula organizamos a rota do get(Pegar informações) e do put(Alterar informações).
+No `get` usamos a função do prisma chamada de `findMany`, foi um processo bem rápido.
+```ts
+app.get('/user', async (req, res) => {
+
+    const dataUser = await prisma.user.findMany()
+
+    res.status(200).send(dataUser)
+
+})
+```
+
+No `put` usamos a função `update`, tivemos que fazer alguns passos extras para definir qual registro nós iriamos fazer a modificação, atualizamos as informações do body pelo postman e além do `data:`, utilizamos o `where:` na função.
+
+```ts
+app.post('/user', async (req, res) => {
+    
+    const dataUser = req.body;
+
+    const User = await prisma.user.create({
+        data: dataUser
+    });
+
+    res.status(201).send('Usuário criado com sucesso!')
+})
+```
+
+Também adicionamos o `req` e o `res` nelas. Fizemos uma forma de resposta diferente, definindo que quando determinada comunicação fosse feita, o retorno seria uma coisa especifica, por exemplo.
+
+`res.status(200).send('Usuário atualizado com sucesso!')`
+
+
+### A estudar
+* Códigos de retorno HTTP

@@ -11,11 +11,11 @@ import { prisma } from "./lib/prisma"
 const app = fastify();
 
 // Listar todos os usuários - pegar informações
-app.get('/user', async () => {
+app.get('/user', async (req, res) => {
 
     const dataUser = await prisma.user.findMany()
 
-    return dataUser
+    res.status(200).send(dataUser)
 
 })
 
@@ -28,12 +28,27 @@ app.post('/user', async (req, res) => {
         data: dataUser
     });
 
-    return 'Usuário criado com sucesso!'
+    res.status(201).send('Usuário criado com sucesso!')
 })
 
 // Atualizar usuário - mudar informações
-app.put('/user', () => {
-    return 'Alterar usuário'
+app.put('/user/:id', async(req, res) => {
+
+    // requisitando parametros
+    const idUser = req.params
+
+    // requisitando body
+    const dataUser = req.body
+
+    const User = await prisma.user.update({
+        where: {
+            id: idUser.id
+        },
+        data: dataUser
+    })
+
+    res.status(200).send('Usuário atualizado com sucesso!')
+
 })
 
 // Deletar usuário - apagar informações
