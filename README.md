@@ -1,8 +1,10 @@
 # Backend NodeJS
 
 ## Menu
-[Aula 1](#aula-1---preparando-o-ambiente-de-desenvolvimento)    
-[Aula 2](#aula-2---persistência-de-dados)    
+[Aula 1 - Preparando o ambiente de desenvolvimento](#aula-1---preparando-o-ambiente-de-desenvolvimento)    
+[Aula 2 - Persistência de dados](#aula-2---persistência-de-dados)    
+[Aula 3 - Organiznando as outras rotas](#aula-3---organizando-as-outras-rotas)    
+[Aula 4 - Melhorias no código e proteção das rotas](#aula-4---melhora-do-código-e-proteção-das-rotas)    
 
 
 ## Aula 1 - Preparando o ambiente de desenvolvimento
@@ -34,12 +36,12 @@ Para fazer a leitura correta do arquivo typescript um script no package.json cha
 Armazenamento dos dados de forma estática para eles não se perderem. 
 Vamos começar a trabalhar com banco de dados. 
 Baixar a extensão prisma para ficar mais fácil trabalhar com ele no VsCode.  
-`Prisma` -> ORM - Object relational map -> Mapeamento do objeto com o banco de dados relacional
-Temos que baixar o prisma, depois o client  
+`Prisma` -> ORM - Object relational map -> Mapeamento do objeto com o banco de dados relacional.  
+Temos que baixar o prisma, depois o client:  
 `npm i prisma -D` -> Baixar o prisma  
 `npm i @prisma/client` -> Baixando o client  
 `npx prisma init --datasource-provider sqlite` -> Iniciar o prisma com sqLite.  
-`npx prisma migrate dev` -> Criando banco de dados com o prisma.
+`npx prisma migrate dev` -> Criando banco de dados com o prisma.  
 `npx prisma studio` -> Ver o banco de dados na versão web.
 
 ```ts
@@ -91,10 +93,12 @@ Adicionamos o `req` e o `res` como parametros do post, trabalhando com as inform
 Para tirar essa estruturação de forma estática no código, escrevemos esse modelo de estrutura como um json raw no postman, que conseguimos ter o acesso por meio da const dataUser =`req.body`
 
 /- Não sei se vamos fazer nessas aulas -/   
-Então temos que preparar essas estrutura de uma forma que peguemos essas informações do front end e a utilizemos para adicionar as infos do usuário.
+Então temos que preparar essas estrutura de uma forma que peguemos essas informações do front end e a utilizemos para adicionar e ver as infos do usuário.
+
+A questão do ver tem o prisma studio que é possível também adicionar informações, mas elas não passam pelas rotas e validações que criamos.
 
 ## Aula 3 - Organizando as outras rotas.
-Nessa aula organizamos a rota do get(Pegar informações) e do put(Alterar informações).
+Nessa aula organizamos a rota do get (Pegar informações) e do put (Alterar informações).
 No `get` usamos a função do prisma chamada de `findMany`, foi um processo bem rápido.
 ```ts
 app.get('/user', async (req, res) => {
@@ -109,22 +113,140 @@ app.get('/user', async (req, res) => {
 No `put` usamos a função `update`, tivemos que fazer alguns passos extras para definir qual registro nós iriamos fazer a modificação, atualizamos as informações do body pelo postman e além do `data:`, utilizamos o `where:` na função.
 
 ```ts
-app.post('/user', async (req, res) => {
-    
-    const dataUser = req.body;
+app.put('/user/:id', async (req, res) => {
 
-    const User = await prisma.user.create({
+    const idUser = req.params
+    const dataUser = req.body
+
+    const User = await prisma.user.update({
+        where: {
+            id: idUser.id
+        },
         data: dataUser
-    });
+    })
 
-    res.status(201).send('Usuário criado com sucesso!')
+    res.status(200).send('Usuário atualizado com sucesso!')
+
 })
+
 ```
 
 Também adicionamos o `req` e o `res` nelas. Fizemos uma forma de resposta diferente, definindo que quando determinada comunicação fosse feita, o retorno seria uma coisa especifica, por exemplo.
 
 `res.status(200).send('Usuário atualizado com sucesso!')`
 
+Para o `delete` nós utilizamos uma estrutura muito parecida com a do `put` também tivemos que definir o alvo da função pela `id` criando a variável e utilizando o where, a diferença é que não tivemos que alterar nada no body, não tivemos que adicionar o `data:` e a função que utilizamos foi a `delete` em vez da `update`
 
 ### A estudar
 * Códigos de retorno HTTP
+
+## Aula 4 - Melhora do código e proteção das rotas
+No começo estamos fazendo a desestruturação da função.
+`const {id} = req.params`
+`const { name, email, password } = req.body`
+
+Quando o nome do campo de dados e da variável é o mesmo, pode se omitir a escrita.
+Em vez de ser assim:
+```ts
+ where: {
+            id: id
+        },
+```        
+Pode ser assim:
+```ts
+ where: {
+            id
+        },
+```
+
+Fizemos essas alterações em todos os campos possíveis, depois indo para a forma como os dados são vistos, nós vamos fazer a encriptação do password para que ele não fique visível como uma string do banco, para isso temos que baixar o `bcrypt`.  
+`npm i bcrypt`  
+`npm i --save-dev @types/bcrypt `  
+Exemplo de utilização do bcrypt:  
+` const passwordHashed = await bcrypt.hash(password, 10)`
+
+Instalação do zod, vai servir para validarmos os nossos dados.  
+`npm i zod`
+
+Exemplo de utilização do zod:
+```ts
+    const schema = z.object({
+        name: z.string().trim().min(6),
+        email: z.email().trim(),
+        password: z.string().trim()
+
+        const { name, email, password } = schema.parse(req.body)
+    })
+ ```
+`trim()` -> Tira os espaçamentos do começo e do final.  
+`min()` -> Define o tamanho mínimo campo.  
+`string()` -> Validação do campo string.  
+`mail()` -> Validação do campo email.
+
+Nós criamos a validação dos campos e adicionamos o `schema.parse` envolvendo a requisição do body, para que as informações sejam verificadas antes de guardar nas constantes. E além disso corrigiu o erro do Typescript que dizia que alguns valores não estavam definidos.
+
+Depois de ter feito essa parte de melhoria no código, fizemos modularização do código, criando uma pasta `routes` e um arquivo `userRoutes` para que nele estivessem guardadas as rotas do nosso servidor. Tornando o código mais organizado. 
+
+Para fazer funcionar realocamos algumas importações para o `userRoutes` - (`prisma`, `zod`, `bcrypt`) e importamos uma instância do fastify que criamos anteriormente no `server.ts`, para que tenha a comunicação correta entre as rotas e o servidor web criado.  
+`import { FastifyInstance } from "fastify"` 
+
+Criando `loginRoutes` para criar o login do nosso servidor. A estrutura básica para criar novas rotas vai ser essa aqui:
+
+```ts 
+import { FastifyInstance } from "fastify"
+import { prisma } from '../lib/prisma'
+import bcrypt from "bcrypt"
+import z from "zod"
+
+export default function useRoutes(app: FastifyInstance) {
+
+    
+}
+```
+Estrutura básica rota login:
+```ts 
+
+export default function useRoutes(app: FastifyInstance) {
+     app.post("/login", async(req, res) => {
+        
+        const {email, password} = req.body
+    })
+}
+```
+
+Vamos precisar receber as informações do body para saber se existe o usuário e do JWT para fazer a autenticação.
+A estruturação do login vai envolver:
+* Validação com o zod
+* Desestruturação dos dados requisitados no banco de dados (email, senha)
+* Criação de uma função para fazer a conferência das informações digitas pelo usuário e os dados do sistema.
+    * Validação do email
+    * Validação da senha
+        * Utilização da função compare do bycript para comparar o que o usuário digitou com a senha encriptada do banco de dados.
+* Criando uma nova const user para não incluir a senha nos dados enviados ao servidor
+* Validando o usuário com o JWT
+* Enviando token para o servidor
+
+Na parte das rotas do user é necessário adicionar um `addHook` com um `preHandler` para fazer a validação do login, antes de permitir a interação com as rotas. 
+
+Agora para que nós possamos acessar as rotas é necessário que passemos o login gerado na parte de autorização do postman.
+
+
+É uma boa prática de segurança não definir na mensagem de erro se é a senha ou o email que está incorreto, para não facilitar o processo de quebra da segurança do usuário / sistema.
+
+`JWT` -> Json Web Token -> Faz uma validação de quando for fazer um requisição para API se você está logado e se tem permissão para fazer as ações.
+`Cors` -> Definir qual endereço pode fazer a requisição para API
+
+`npm i @fastify/jwt`  
+`npm i @fastify/cors`  
+
+Adicionando o cors na nossa aplicação, o valor que estiver no origin, vai ser o endereço web de onde é permitido fazer a requisição, caso seja `*` qualquer valor vai ser aceito.
+```ts
+app.register(fastifyCors, {
+    origin: "*"
+})
+ ```
+
+### Pesquisar depois
+* Bcrypt
+* Zod
+* JWT

@@ -3,58 +3,24 @@ import 'dotenv/config'
 
 // Importando o fastify 
 import fastify from "fastify";
+import fastifyCors from "@fastify/cors"
+import fastifyJwt from "@fastify/jwt"
 
-// importando a ligação do prisma com o banco de dados para ser usado aqui 
-import { prisma } from "./lib/prisma"
+import loginRoutes from './routes/loginRoutes';
+import userRoutes from './routes/userRoutes';
 
 //Criando instância do fastify
 const app = fastify();
 
-// Listar todos os usuários - pegar informações
-app.get('/user', async (req, res) => {
-
-    const dataUser = await prisma.user.findMany()
-
-    res.status(200).send(dataUser)
-
+app.register(fastifyCors, {
+    origin: "*"
+})
+app.register(fastifyJwt, {
+    secret: "nikoasd"
 })
 
-// Criar usuário - pegar informações
-app.post('/user', async (req, res) => {
-    
-    const dataUser = req.body;
-
-    const User = await prisma.user.create({
-        data: dataUser
-    });
-
-    res.status(201).send('Usuário criado com sucesso!')
-})
-
-// Atualizar usuário - mudar informações
-app.put('/user/:id', async(req, res) => {
-
-    // requisitando parametros
-    const idUser = req.params
-
-    // requisitando body
-    const dataUser = req.body
-
-    const User = await prisma.user.update({
-        where: {
-            id: idUser.id
-        },
-        data: dataUser
-    })
-
-    res.status(200).send('Usuário atualizado com sucesso!')
-
-})
-
-// Deletar usuário - apagar informações
-app.delete('/user', () => {
-    return 'Deletar usuário'
-})
+app.register(loginRoutes)
+app.register(userRoutes)
 
 const HOST = process.env.HOST;
 const PORT = process.env.PORT;
